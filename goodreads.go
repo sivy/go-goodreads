@@ -133,17 +133,22 @@ func (r Review) ReadAtRelative() string {
 // PUBLIC
 
 type Client struct {
-	apiKey string
+	apiKey     string
+	httpClient *http.Client
 }
 
 func NewClient(apiKey string) *Client {
-	return &Client{apiKey: apiKey}
+	return &Client{apiKey: apiKey, httpClient: http.DefaultClient}
+}
+
+func NewClientWithHttpClient(apiKey string, httpClient *http.Client) *Client {
+	return &Client{apiKey: apiKey, httpClient: httpClient}
 }
 
 func (c *Client) GetUser(id string, limit int) (*User, error) {
 	uri := apiRoot + "/user/show/" + id + ".xml?key=" + c.apiKey
 	response := &Response{}
-	err := getData(uri, response)
+	err := c.getData(uri, response)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +180,7 @@ func (c *Client) GetUser(id string, limit int) (*User, error) {
 func (c *Client) GetBook(id string) (*Book, error) {
 	uri := apiRoot + "/book/show/" + id + ".xml?key=" + c.apiKey
 	response := &Response{}
-	err := getData(uri, response)
+	err := c.getData(uri, response)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +193,7 @@ func (c *Client) GetLastRead(id string, limit int) ([]Review, error) {
 	uri := apiRoot + "/review/list/" + id + ".xml?key=" + c.apiKey + "&v=2&shelf=read&sort=date_read&order=d&per_page=" + l
 
 	response := &Response{}
-	err := getData(uri, response)
+	err := c.getData(uri, response)
 	if err != nil {
 		return []Review{}, err
 	}
@@ -205,7 +210,7 @@ func (c *Client) ReviewsForShelf(user *User, shelf string) ([]Review, error) {
 	for i := 1; i <= pages; i++ {
 		uri := fmt.Sprintf("%s/review/list/%s.xml?key=%s&v=2&page=%d&per_page=%d", apiRoot, user.ID, c.apiKey, i, perPage)
 		response := &Response{}
-		err := getData(uri, response)
+		err := c.getData(uri, response)
 		if err != nil {
 			return []Review{}, err
 		}
@@ -218,16 +223,16 @@ func (c *Client) ReviewsForShelf(user *User, shelf string) ([]Review, error) {
 
 // PRIVATE
 
-func getData(uri string, i interface{}) error {
-	data, err := getRequest(uri)
+func (c *Client) getData(uri string, i interface{}) error {
+	data, err := c.getRequest(uri)
 	if err != nil {
 		return err
 	}
 	return xmlUnmarshal(data, i)
 }
 
-func getRequest(uri string) ([]byte, error) {
-	res, err := http.Get(uri)
+func (c *Client) getRequest(uri string) ([]byte, error) {
+	res, err := c.httpClient.Get(uri)
 	if err != nil {
 		return []byte{}, err
 	}
