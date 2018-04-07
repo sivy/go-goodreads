@@ -133,15 +133,19 @@ func (r Review) ReadAtRelative() string {
 
 // PUBLIC
 
-func GetUser(id, key string, limit int) *User {
-	uri := apiRoot + "/user/show/" + id + ".xml?key=" + key
+type Client struct {
+	ApiKey string
+}
+
+func (c *Client) GetUser(id string, limit int) *User {
+	uri := apiRoot + "/user/show/" + id + ".xml?key=" + c.ApiKey
 	response := &Response{}
 	getData(uri, response)
 
 	for i := range response.User.Statuses {
 		status := &response.User.Statuses[i]
 		bookid := status.Book.ID
-		book := GetBook(bookid, key)
+		book := c.GetBook(bookid)
 		status.Book = book
 	}
 
@@ -149,23 +153,23 @@ func GetUser(id, key string, limit int) *User {
 		response.User.Statuses = response.User.Statuses[:limit]
 	} else {
 		remaining := limit - len(response.User.Statuses)
-		response.User.LastRead = GetLastRead(id, key, remaining)
+		response.User.LastRead = c.GetLastRead(id, remaining)
 	}
 
 	return &response.User
 }
 
-func GetBook(id, key string) Book {
-	uri := apiRoot + "/book/show/" + id + ".xml?key=" + key
+func (c *Client) GetBook(id string) Book {
+	uri := apiRoot + "/book/show/" + id + ".xml?key=" + c.ApiKey
 	response := &Response{}
 	getData(uri, response)
 
 	return response.Book
 }
 
-func GetLastRead(id, key string, limit int) []Review {
+func (c *Client) GetLastRead(id string, limit int) []Review {
 	l := strconv.Itoa(limit)
-	uri := apiRoot + "/review/list/" + id + ".xml?key=" + key + "&v=2&shelf=read&sort=date_read&order=d&per_page=" + l
+	uri := apiRoot + "/review/list/" + id + ".xml?key=" + c.ApiKey + "&v=2&shelf=read&sort=date_read&order=d&per_page=" + l
 
 	response := &Response{}
 	getData(uri, response)
