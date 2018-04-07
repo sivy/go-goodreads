@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	apiRoot = "https://www.goodreads.com/"
+	apiRoot = "https://www.goodreads.com"
 )
 
 type Response struct {
@@ -134,7 +134,7 @@ func (r Review) ReadAtRelative() string {
 // PUBLIC
 
 func GetUser(id, key string, limit int) *User {
-	uri := apiRoot + "user/show/" + id + ".xml?key=" + key
+	uri := apiRoot + "/user/show/" + id + ".xml?key=" + key
 	response := &Response{}
 	getData(uri, response)
 
@@ -156,7 +156,7 @@ func GetUser(id, key string, limit int) *User {
 }
 
 func GetBook(id, key string) Book {
-	uri := apiRoot + "book/show/" + id + ".xml?key=" + key
+	uri := apiRoot + "/book/show/" + id + ".xml?key=" + key
 	response := &Response{}
 	getData(uri, response)
 
@@ -165,7 +165,7 @@ func GetBook(id, key string) Book {
 
 func GetLastRead(id, key string, limit int) []Review {
 	l := strconv.Itoa(limit)
-	uri := apiRoot + "review/list/" + id + ".xml?key=" + key + "&v=2&shelf=read&sort=date_read&order=d&per_page=" + l
+	uri := apiRoot + "/review/list/" + id + ".xml?key=" + key + "&v=2&shelf=read&sort=date_read&order=d&per_page=" + l
 
 	response := &Response{}
 	getData(uri, response)
