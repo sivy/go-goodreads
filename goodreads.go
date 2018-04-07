@@ -136,6 +136,10 @@ type Client struct {
 	ApiKey string
 }
 
+func NewClient(apiKey string) *Client {
+	return &Client{ApiKey: apiKey}
+}
+
 func (c *Client) GetUser(id string, limit int) (*User, error) {
 	uri := apiRoot + "/user/show/" + id + ".xml?key=" + c.ApiKey
 	response := &Response{}
@@ -190,6 +194,26 @@ func (c *Client) GetLastRead(id string, limit int) ([]Review, error) {
 	}
 
 	return response.Reviews, nil
+}
+
+func (c *Client) ReviewsForShelf(user *User, shelf string) ([]Review, error) {
+	reviews := make([]Review, 0)
+	perPage := 200
+	pages := (user.ReviewCount / perPage) + 1
+
+	// Keep looping until we have all the reviews
+	for i := 1; i <= pages; i++ {
+		uri := fmt.Sprintf("%s/review/list/%s.xml?key=%s&v=2&page=%d&per_page=%d", apiRoot, user.ID, c.ApiKey, i, perPage)
+		response := &Response{}
+		err := getData(uri, response)
+		if err != nil {
+			return []Review{}, err
+		}
+
+		reviews = append(reviews, response.Reviews...)
+	}
+
+	return reviews, nil
 }
 
 // PRIVATE
