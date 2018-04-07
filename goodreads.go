@@ -133,15 +133,15 @@ func (r Review) ReadAtRelative() string {
 // PUBLIC
 
 type Client struct {
-	ApiKey string
+	apiKey string
 }
 
 func NewClient(apiKey string) *Client {
-	return &Client{ApiKey: apiKey}
+	return &Client{apiKey: apiKey}
 }
 
 func (c *Client) GetUser(id string, limit int) (*User, error) {
-	uri := apiRoot + "/user/show/" + id + ".xml?key=" + c.ApiKey
+	uri := apiRoot + "/user/show/" + id + ".xml?key=" + c.apiKey
 	response := &Response{}
 	err := getData(uri, response)
 	if err != nil {
@@ -173,7 +173,7 @@ func (c *Client) GetUser(id string, limit int) (*User, error) {
 }
 
 func (c *Client) GetBook(id string) (*Book, error) {
-	uri := apiRoot + "/book/show/" + id + ".xml?key=" + c.ApiKey
+	uri := apiRoot + "/book/show/" + id + ".xml?key=" + c.apiKey
 	response := &Response{}
 	err := getData(uri, response)
 	if err != nil {
@@ -185,7 +185,7 @@ func (c *Client) GetBook(id string) (*Book, error) {
 
 func (c *Client) GetLastRead(id string, limit int) ([]Review, error) {
 	l := strconv.Itoa(limit)
-	uri := apiRoot + "/review/list/" + id + ".xml?key=" + c.ApiKey + "&v=2&shelf=read&sort=date_read&order=d&per_page=" + l
+	uri := apiRoot + "/review/list/" + id + ".xml?key=" + c.apiKey + "&v=2&shelf=read&sort=date_read&order=d&per_page=" + l
 
 	response := &Response{}
 	err := getData(uri, response)
@@ -203,7 +203,7 @@ func (c *Client) ReviewsForShelf(user *User, shelf string) ([]Review, error) {
 
 	// Keep looping until we have all the reviews
 	for i := 1; i <= pages; i++ {
-		uri := fmt.Sprintf("%s/review/list/%s.xml?key=%s&v=2&page=%d&per_page=%d", apiRoot, user.ID, c.ApiKey, i, perPage)
+		uri := fmt.Sprintf("%s/review/list/%s.xml?key=%s&v=2&page=%d&per_page=%d", apiRoot, user.ID, c.apiKey, i, perPage)
 		response := &Response{}
 		err := getData(uri, response)
 		if err != nil {
