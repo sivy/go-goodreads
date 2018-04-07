@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	apiRoot = "http://www.goodreads.com/"
+	apiRoot = "https://www.goodreads.com/"
 )
 
 type Response struct {
