@@ -4,7 +4,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -137,73 +136,89 @@ type Client struct {
 	ApiKey string
 }
 
-func (c *Client) GetUser(id string, limit int) *User {
+func (c *Client) GetUser(id string, limit int) (*User, error) {
 	uri := apiRoot + "/user/show/" + id + ".xml?key=" + c.ApiKey
 	response := &Response{}
-	getData(uri, response)
+	err := getData(uri, response)
+	if err != nil {
+		return nil, err
+	}
 
 	for i := range response.User.Statuses {
 		status := &response.User.Statuses[i]
 		bookid := status.Book.ID
-		book := c.GetBook(bookid)
-		status.Book = book
+		book, err := c.GetBook(bookid)
+		if err != nil {
+			return nil, err
+		}
+		status.Book = *book
 	}
 
 	if len(response.User.Statuses) >= limit {
 		response.User.Statuses = response.User.Statuses[:limit]
 	} else {
 		remaining := limit - len(response.User.Statuses)
-		response.User.LastRead = c.GetLastRead(id, remaining)
+		lastRead, err := c.GetLastRead(id, remaining)
+		if err != nil {
+			return nil, err
+		}
+		response.User.LastRead = lastRead
 	}
 
-	return &response.User
+	return &response.User, nil
 }
 
-func (c *Client) GetBook(id string) Book {
+func (c *Client) GetBook(id string) (*Book, error) {
 	uri := apiRoot + "/book/show/" + id + ".xml?key=" + c.ApiKey
 	response := &Response{}
-	getData(uri, response)
+	err := getData(uri, response)
+	if err != nil {
+		return nil, err
+	}
 
-	return response.Book
+	return &response.Book, nil
 }
 
-func (c *Client) GetLastRead(id string, limit int) []Review {
+func (c *Client) GetLastRead(id string, limit int) ([]Review, error) {
 	l := strconv.Itoa(limit)
 	uri := apiRoot + "/review/list/" + id + ".xml?key=" + c.ApiKey + "&v=2&shelf=read&sort=date_read&order=d&per_page=" + l
 
 	response := &Response{}
-	getData(uri, response)
+	err := getData(uri, response)
+	if err != nil {
+		return []Review{}, err
+	}
 
-	return response.Reviews
+	return response.Reviews, nil
 }
 
 // PRIVATE
 
-func getData(uri string, i interface{}) {
-	data := getRequest(uri)
-	xmlUnmarshal(data, i)
+func getData(uri string, i interface{}) error {
+	data, err := getRequest(uri)
+	if err != nil {
+		return err
+	}
+	return xmlUnmarshal(data, i)
 }
 
-func getRequest(uri string) []byte {
+func getRequest(uri string) ([]byte, error) {
 	res, err := http.Get(uri)
 	if err != nil {
-		log.Fatal(err)
+		return []byte{}, err
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		log.Fatal(err)
+		return []byte{}, err
 	}
 
-	return body
+	return body, nil
 }
 
-func xmlUnmarshal(b []byte, i interface{}) {
-	err := xml.Unmarshal(b, i)
-	if err != nil {
-		log.Fatal(err)
-	}
+func xmlUnmarshal(b []byte, i interface{}) error {
+	return xml.Unmarshal(b, i)
 }
 
 func parseDate(s string) (time.Time, error) {
