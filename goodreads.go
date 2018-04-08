@@ -208,7 +208,7 @@ func (c *Client) ReviewsForShelf(user *User, shelf string) ([]Review, error) {
 
 	// Keep looping until we have all the reviews
 	for i := 1; i <= pages; i++ {
-		uri := fmt.Sprintf("%s/review/list/%s.xml?key=%s&v=2&page=%d&per_page=%d", apiRoot, user.ID, c.apiKey, i, perPage)
+		uri := fmt.Sprintf("%s/review/list/%s.xml?key=%s&v=2&page=%d&per_page=%d&shelf=%s", apiRoot, user.ID, c.apiKey, i, perPage, shelf)
 		response := &Response{}
 		err := c.getData(uri, response)
 		if err != nil {
