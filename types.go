@@ -6,6 +6,10 @@ type Response struct {
 	Reviews []Review `xml:"reviews>review"`
 }
 
+type AuthorResponse struct {
+	Author Author `xml:"author"`
+}
+
 type User struct {
 	ID            string       `xml:"id"`
 	Name          string       `xml:"name"`
@@ -84,9 +88,17 @@ func (b Book) Author() Author {
 }
 
 type Author struct {
-	ID   string `xml:"id"`
-	Name string `xml:"name"`
-	Link string `xml:"link"`
+	ID                   string `xml:"id"`
+	Name                 string `xml:"name"`
+	Link                 string `xml:"link"`
+	FansCount            int    `xml:"fans_count"`
+	AuthorFollowersCount int    `xml:"author_followers_count"`
+	LargeImageURL        string `xml:"large_image_url"`
+	ImageURL             string `xml:"image_url"`
+	SmallImageURL        string `xml:"small_image_url"`
+	WorksCount           int    `xml:"works_count"`
+	Gender               string `xml:"gender"`
+	Hometown             string `xml:"hometown"`
 }
 
 type Review struct {

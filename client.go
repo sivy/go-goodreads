@@ -67,6 +67,16 @@ func (c *Client) GetBook(id string) (*Book, error) {
 	return &response.Book, nil
 }
 
+func (c *Client) GetAuthor(id string) (*Author, error) {
+	uri := apiRoot + "/author/show/" + id + ".xml?key=" + c.apiKey
+	response := &AuthorResponse{}
+	err := c.getData(uri, response)
+	if err != nil {
+		return nil, err
+	}
+	return &response.Author, nil
+}
+
 func (c *Client) GetLastRead(id string, limit int) ([]Review, error) {
 	l := strconv.Itoa(limit)
 	uri := apiRoot + "/review/list/" + id + ".xml?key=" + c.apiKey + "&v=2&shelf=read&sort=date_read&order=d&per_page=" + l
