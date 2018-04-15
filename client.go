@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-var (
+const (
 	apiRoot = "https://www.goodreads.com"
 )
 
