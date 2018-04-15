@@ -4,11 +4,16 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
 )
 
 const (
-	apiRoot = "https://www.goodreads.com"
+	apiRoot        = "https://www.goodreads.com"
+	reviewListPath = "/review/list.xml"
+	authorShowPath = "/author/show.xml"
+	bookShowPath   = "/book/show.xml"
+	userShowPath   = "/user/show.xml"
 )
 
 type Client struct {
@@ -25,9 +30,12 @@ func NewClientWithHttpClient(apiKey string, httpClient *http.Client) *Client {
 }
 
 func (c *Client) GetUser(id string, limit int) (*User, error) {
-	uri := apiRoot + "/user/show/" + id + ".xml?key=" + c.apiKey
+	params := toURLValues(map[string]string{
+		"key": c.apiKey,
+		"id":  id,
+	})
 	response := &Response{}
-	err := c.getData(uri, response)
+	err := c.getData(userShowPath, params, response)
 	if err != nil {
 		return nil, err
 	}
@@ -57,9 +65,12 @@ func (c *Client) GetUser(id string, limit int) (*User, error) {
 }
 
 func (c *Client) GetBook(id string) (*Book, error) {
-	uri := apiRoot + "/book/show/" + id + ".xml?key=" + c.apiKey
+	params := toURLValues(map[string]string{
+		"key": c.apiKey,
+		"id":  id,
+	})
 	response := &Response{}
-	err := c.getData(uri, response)
+	err := c.getData(bookShowPath, params, response)
 	if err != nil {
 		return nil, err
 	}
@@ -68,9 +79,12 @@ func (c *Client) GetBook(id string) (*Book, error) {
 }
 
 func (c *Client) GetAuthor(id string) (*Author, error) {
-	uri := apiRoot + "/author/show/" + id + ".xml?key=" + c.apiKey
+	params := toURLValues(map[string]string{
+		"key": c.apiKey,
+		"id":  id,
+	})
 	response := &AuthorResponse{}
-	err := c.getData(uri, response)
+	err := c.getData(authorShowPath, params, response)
 	if err != nil {
 		return nil, err
 	}
@@ -79,10 +93,18 @@ func (c *Client) GetAuthor(id string) (*Author, error) {
 
 func (c *Client) GetLastRead(id string, limit int) ([]Review, error) {
 	l := strconv.Itoa(limit)
-	uri := apiRoot + "/review/list/" + id + ".xml?key=" + c.apiKey + "&v=2&shelf=read&sort=date_read&order=d&per_page=" + l
+	params := toURLValues(map[string]string{
+		"key":      c.apiKey,
+		"v":        "2",
+		"id":       id,
+		"shelf":    "read",
+		"sort":     "date_read",
+		"order":    "d",
+		"per_page": l,
+	})
 
 	response := &Response{}
-	err := c.getData(uri, response)
+	err := c.getData(reviewListPath, params, response)
 	if err != nil {
 		return []Review{}, err
 	}
@@ -97,9 +119,17 @@ func (c *Client) ReviewsForShelf(user *User, shelf string) ([]Review, error) {
 
 	// Keep looping until we have all the reviews
 	for i := 1; i <= pages; i++ {
-		uri := fmt.Sprintf("%s/review/list/%s.xml?key=%s&v=2&page=%d&per_page=%d&shelf=%s", apiRoot, user.ID, c.apiKey, i, perPage, shelf)
+		params := toURLValues(map[string]string{
+			"key":      c.apiKey,
+			"id":       user.ID,
+			"v":        "2",
+			"page":     strconv.Itoa(i),
+			"per_page": strconv.Itoa(perPage),
+			"shelf":    shelf,
+		})
+
 		response := &Response{}
-		err := c.getData(uri, response)
+		err := c.getData(reviewListPath, params, response)
 		if err != nil {
 			return []Review{}, err
 		}
@@ -110,8 +140,14 @@ func (c *Client) ReviewsForShelf(user *User, shelf string) ([]Review, error) {
 	return reviews, nil
 }
 
-func (c *Client) getData(uri string, i interface{}) error {
-	data, err := c.getRequest(uri)
+func (c *Client) getData(path string, params url.Values, i interface{}) error {
+	uri, err := url.Parse(fmt.Sprintf("%s%s", apiRoot, path))
+	if err != nil {
+		return err
+	}
+	uri.RawQuery = params.Encode()
+
+	data, err := c.getRequest(uri.String())
 	if err != nil {
 		return err
 	}
@@ -131,4 +167,12 @@ func (c *Client) getRequest(uri string) ([]byte, error) {
 	}
 
 	return body, nil
+}
+
+func toURLValues(m map[string]string) url.Values {
+	params := url.Values{}
+	for key, value := range m {
+		params.Add(key, value)
+	}
+	return params
 }
