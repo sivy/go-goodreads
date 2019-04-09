@@ -1,15 +1,19 @@
 package goodreads
 
+// Response wraps a GoodReads GetUser response
 type Response struct {
 	User    User     `xml:"user"`
 	Book    Book     `xml:"book"`
 	Reviews []Review `xml:"reviews>review"`
+	Updates []Update `xml:"updates>update"`
 }
 
+// AuthorResponse wraps the GoodReads GetBook response
 type AuthorResponse struct {
 	Author Author `xml:"author"`
 }
 
+// User represents a user element in the GoodReads response
 type User struct {
 	ID            string       `xml:"id"`
 	Name          string       `xml:"name"`
@@ -25,6 +29,7 @@ type User struct {
 	LastRead      []Review
 }
 
+// ReadingShelf returns the currently-reading shelf for a user
 func (u User) ReadingShelf() Shelf {
 	for _, shelf := range u.Shelves {
 		if shelf.Name == "currently-reading" {
@@ -35,6 +40,7 @@ func (u User) ReadingShelf() Shelf {
 	return Shelf{}
 }
 
+// ReadShelf returns the read shelf for a user
 func (u User) ReadShelf() Shelf {
 	for _, shelf := range u.Shelves {
 		if shelf.Name == "read" {
@@ -45,6 +51,7 @@ func (u User) ReadShelf() Shelf {
 	return Shelf{}
 }
 
+// ToReadShelf returns the to-read shelf for a user
 func (u User) ToReadShelf() Shelf {
 	for _, shelf := range u.Shelves {
 		if shelf.Name == "to-read" {
@@ -55,12 +62,46 @@ func (u User) ToReadShelf() Shelf {
 	return Shelf{}
 }
 
+// Actor represents an actor element in the GoodReads response
+type Actor struct {
+	ID       string `xml:"id"`
+	Name     string `xml:"name"`
+	ImageURL string `xml:"image_url"`
+	Link     string `xml:"link"`
+}
+
+// Update represents an update element in the GoodReads response
+type Update struct {
+	Type       string `xml:"type,attr"`
+	ActionText string `xml:"action_text"`
+	Actor      Actor  `xml:"actor"`
+	Object     Object `xml:"object"`
+	Updated    string `xml:"updated_at"`
+}
+
+// Object represents an object element in the GoodReads response
+type Object struct {
+	ReadStatus ReadStatus `xml:"read_status"`
+}
+
+// ReadStatus represents a read_status element in the GoodReads response
+type ReadStatus struct {
+	ID       string `xml:"id"`
+	ReviewID string `xml:"review_id"`
+	UserID   string `xml:"user_id"`
+	Status   string `xml:"status"`
+	Updated  string `xml:"updated_at"`
+	Review   Review `xml:"review"`
+}
+
+// Shelf represents a shelf element in the GoodReads response
 type Shelf struct {
 	ID        string `xml:"id"`
 	BookCount string `xml:"book_count"`
 	Name      string `xml:"name"`
 }
 
+// UserStatus represents a user status element in the GoodReads response
 type UserStatus struct {
 	Page    int    `xml:"page"`
 	Percent int    `xml:"percent"`
@@ -68,10 +109,12 @@ type UserStatus struct {
 	Book    Book   `xml:"book"`
 }
 
+// UpdatedRelative returns the relative date for a user status
 func (u UserStatus) UpdatedRelative() string {
 	return relativeDate(u.Updated)
 }
 
+// Book represents a book element in the GoodReads response
 type Book struct {
 	ID       string   `xml:"id"`
 	Title    string   `xml:"title"`
@@ -83,10 +126,12 @@ type Book struct {
 	ISBN     string   `xml:"isbn"`
 }
 
+// Author returns the first author in the Book's author list
 func (b Book) Author() Author {
 	return b.Authors[0]
 }
 
+// Author represents an author element in the GoodReads response
 type Author struct {
 	ID                   string `xml:"id"`
 	Name                 string `xml:"name"`
@@ -101,6 +146,7 @@ type Author struct {
 	Hometown             string `xml:"hometown"`
 }
 
+// Review represents an review element in the GoodReads response
 type Review struct {
 	Book   Book   `xml:"book"`
 	Rating int    `xml:"rating"`
@@ -108,14 +154,17 @@ type Review struct {
 	Link   string `xml:"link"`
 }
 
+// FullStars returns a list representing the number of rating stars
 func (r Review) FullStars() []bool {
 	return make([]bool, r.Rating)
 }
 
+// EmptyStars returns a list representing the number of "empty" rating stars
 func (r Review) EmptyStars() []bool {
 	return make([]bool, 5-r.Rating)
 }
 
+// ReadAtShort returns a short string representing the read_at date
 func (r Review) ReadAtShort() string {
 	date, err := parseDate(r.ReadAt)
 	if err != nil {
@@ -125,6 +174,7 @@ func (r Review) ReadAtShort() string {
 	return (string)(date.Format("2 Jan 2006"))
 }
 
+// ReadAtRelative returns a short string representing the relative read_at date
 func (r Review) ReadAtRelative() string {
 	return relativeDate(r.ReadAt)
 }
