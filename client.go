@@ -16,19 +16,23 @@ const (
 	userShowPath   = "/user/show.xml"
 )
 
+// Client is the main GoodReads client
 type Client struct {
 	apiKey     string
 	httpClient *http.Client
 }
 
+// NewClient returns a Client
 func NewClient(apiKey string) *Client {
 	return &Client{apiKey: apiKey, httpClient: http.DefaultClient}
 }
 
-func NewClientWithHttpClient(apiKey string, httpClient *http.Client) *Client {
+// NewClientWithHTTPClient returns a Client from an existing http.Client
+func NewClientWithHTTPClient(apiKey string, httpClient *http.Client) *Client {
 	return &Client{apiKey: apiKey, httpClient: httpClient}
 }
 
+// GetUser sends a /user/show.xml request
 func (c *Client) GetUser(id string, limit int) (*User, error) {
 	params := toURLValues(map[string]string{
 		"key": c.apiKey,
@@ -64,6 +68,7 @@ func (c *Client) GetUser(id string, limit int) (*User, error) {
 	return &response.User, nil
 }
 
+// GetBook sends a /book/show.xml request
 func (c *Client) GetBook(id string) (*Book, error) {
 	params := toURLValues(map[string]string{
 		"key": c.apiKey,
@@ -78,6 +83,7 @@ func (c *Client) GetBook(id string) (*Book, error) {
 	return &response.Book, nil
 }
 
+// GetAuthor sends a /author/show.xml request
 func (c *Client) GetAuthor(id string) (*Author, error) {
 	params := toURLValues(map[string]string{
 		"key": c.apiKey,
@@ -91,6 +97,7 @@ func (c *Client) GetAuthor(id string) (*Author, error) {
 	return &response.Author, nil
 }
 
+// GetLastRead sends a /review/list.xml request
 func (c *Client) GetLastRead(id string, limit int) ([]Review, error) {
 	l := strconv.Itoa(limit)
 	params := toURLValues(map[string]string{
@@ -112,6 +119,8 @@ func (c *Client) GetLastRead(id string, limit int) ([]Review, error) {
 	return response.Reviews, nil
 }
 
+// ReviewsForShelf returns book reviews for one of the GoodReads
+// shelves
 func (c *Client) ReviewsForShelf(user *User, shelf string) ([]Review, error) {
 	reviews := make([]Review, 0)
 	perPage := 200
